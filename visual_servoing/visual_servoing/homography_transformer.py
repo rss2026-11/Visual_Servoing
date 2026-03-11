@@ -74,7 +74,7 @@ class HomographyTransformer(Node):
         v = msg.v
 
         # Call to main function
-        int(x), int(y) = self.transformUvToXy(u, v)
+        x, y = self.transformUvToXy(u, v)
 
         # Publish relative xy position of object in real world
         relative_xy_msg = ConeLocation()
