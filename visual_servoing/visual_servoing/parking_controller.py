@@ -38,6 +38,41 @@ class ParkingController(Node):
         self.speed = 0.0
         self.steering_angle = 0.0
 
+    # def relative_cone_callback(self, msg):
+    #     self.relative_x = msg.x_pos
+    #     self.relative_y = msg.y_pos
+    #     drive_cmd = AckermannDriveStamped()
+
+    #     #################################
+
+    #     # YOUR CODE HERE
+    #     # Use relative position and your control law to set drive_cmd
+
+    #     self.distance = math.hypot(self.relative_x, self.relative_y)
+    #     angle = math.atan2(self.relative_y, self.relative_x)
+
+    #     # slow_threshold = 2.0
+
+    #     stop_distance = (self.distance + angle) - self.parking_distance
+    #     self.speed = np.clip(stop_distance, -1.0, 1.0)
+
+    #     if self.speed < 0:
+    #         steering_angle = -angle
+    #     else:
+    #         steering_angle = angle
+            
+    #     self.steering_angle = np.clip(steering_angle, -4.0, 4.0)
+            
+
+    #     drive_cmd.drive.steering_angle = self.steering_angle
+    #     drive_cmd.drive.speed = self.speed
+    #     drive_cmd.drive.steering_angle_velocity = 0.0 
+
+    #     #################################
+
+    #     self.drive_pub.publish(drive_cmd)
+    #     self.error_publisher()
+
     def relative_cone_callback(self, msg):
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
@@ -51,14 +86,14 @@ class ParkingController(Node):
         self.distance = math.hypot(self.relative_x, self.relative_y)
         angle = math.atan2(self.relative_y, self.relative_x)
 
-        slow_threshold = 2.0
+        # slow_threshold = 2.0
 
-        stop_distance = self.distance - self.parking_distance
-        self.speed = np.clip(stop_distance / slow_threshold, -1.0, 1.0)
-
-        if self.speed < 0:
+        if angle > 0.05 or angle < - 0.05:
+            self.speed = -1.0
             steering_angle = -angle
-        else:
+        else: 
+            stop_distance = (self.distance + angle) - self.parking_distance
+            self.speed = np.clip(stop_distance, -1.0, 1.0)
             steering_angle = angle
             
         self.steering_angle = np.clip(steering_angle, -4.0, 4.0)
