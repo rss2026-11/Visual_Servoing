@@ -16,10 +16,10 @@ class HomographyEvaluator(Node):
             self.cone_callback,
             10
         )
-
+        METERS_PER_INCH = 0.0254
         # Ground truth: specify the actual (x, y) location of the cone in meters here
-        self.ground_truth_x = 48
-        self.ground_truth_y = -24
+        self.ground_truth_x = 48.0 * METERS_PER_INCH
+        self.ground_truth_y = -24 * METERS_PER_INCH
 
         self.errors = []
         self.get_logger().info("Homography Evaluator Initialized. Play your bag file to start collecting data!")
