@@ -187,6 +187,11 @@ class YoloAnnotatorNode(Node):
             # Hint: Use cv2's `rectangle` function to draw a rectangle on the annotated image.
             
             color = self.class_color_map[det.class_name]
+
+            print(out_image)
+            print(top_left)
+            print(bottom_right)
+            print(color)
             cv2.rectangle(out_image, top_left, bottom_right, color, 2) # rectangle of edge thickness = 2
 
             # TODO: Label the box with the class name and confidence.
