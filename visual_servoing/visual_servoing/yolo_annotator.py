@@ -177,8 +177,8 @@ class YoloAnnotatorNode(Node):
 
         for det in detections:
             # TODO: Get the bounding box for the detection
-            top_left = (det.x1, det.y1)
-            bottom_right = (det.x2, det.y2)
+            top_left = (int(det.x1), int(det.y1))
+            bottom_right = (int(det.x2), int(det.y2))
 
             # TODO: Draw the bounding box around the detection to the output image.
             #       Use the colors you specified per class in `get_class_color_map`
