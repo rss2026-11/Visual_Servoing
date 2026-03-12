@@ -153,12 +153,14 @@ class YoloAnnotatorNode(Node):
         # Hint: use Python's zip keyword to iterate through the three arrays in a single for loop.
 
         for xys, confs, clss in zip(xyxy_np, conf_np, cls_np):
-            detection = Detection()
-            detection.class_id = clss
-            detection.class_name= self.model.names[int(clss)]
-            detection.confidence= confs
-            # Bounding box coordinates in the original image:
-            detection.x1, detection.y1, detection.x2, detection.y2 = xys
+            detection = Detection(
+                clss, self.model.names[int(clss)], confs, xys[0], xys[1], xys[2], xys[3]
+            )
+            # detection.class_id = clss
+            # detection.class_name= self.model.names[int(clss)]
+            # detection.confidence= confs
+            # # Bounding box coordinates in the original image:
+            # detection.x1, detection.y1, detection.x2, detection.y2 = xys
 
             detections.append(detection)
            
