@@ -25,8 +25,7 @@ class ParkingController(Node):
         self.drive_pub = self.create_publisher(AckermannDriveStamped, DRIVE_TOPIC, 10)
         self.error_pub = self.create_publisher(ParkingError, "/parking_error", 10)
 
-        self.create_subscription(
-            ConeLocation, "/relative_cone", self.relative_cone_callback, 1)
+        self.create_subscription(ConeLocation, "/relative_cone", self.relative_cone_callback, 1)
 
         self.parking_distance = 1.5  # meters; try playing with this number!
         self.relative_x = 0
