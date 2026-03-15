@@ -50,6 +50,10 @@ class ConeDetector(Node):
 
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
 
+
+        h, w, _ = image.shape
+        image[int(h * 2/3):h, 0:w] = 0
+
         bounding_box = cd_color_segmentation(image, None)
 
         # Draw bounding box on debug image
@@ -66,7 +70,7 @@ class ConeDetector(Node):
 
 
         (x1, y1), (x2, y2) = bounding_box
-        
+
         u = float((x1 + x2) / 2)
 
         if self.LineFollower:
@@ -77,7 +81,7 @@ class ConeDetector(Node):
         cone_px = ConeLocationPixel()
         cone_px.u = u
         cone_px.v = v
-        self.cone_pub.publish(cone_px)  
+        self.cone_pub.publish(cone_px)
 
 def main(args=None):
     rclpy.init(args=args)
