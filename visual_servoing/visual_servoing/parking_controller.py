@@ -51,7 +51,7 @@ class ParkingController(Node):
         # if cone is at a large angle, turn toward it first
         if abs(angle) > 0.2:
             speed = -0.1  # drive forward slowly while turning
-            steering_angle = angle
+            steering_angle = -angle
         # close enough to target — stop
         elif abs(distance_error) < 0.1:
             speed = 0.0
