@@ -49,7 +49,7 @@ class ParkingController(Node):
         distance_error = self.distance - self.parking_distance
 
         # if cone is at a large angle, turn toward it first
-        if abs(angle) > 0.2:
+        if abs(angle) > 0.15:
             speed = -0.5  # drive forward slowly while turning
             steering_angle = -angle
         # close enough to target — stop
@@ -60,9 +60,9 @@ class ParkingController(Node):
         else:
             speed = np.clip(0.5 * distance_error, -1.0, 1.0)
             if distance_error > 0:
-                steering_angle = angle * 5
+                steering_angle = angle * 2
             else:
-                steering_angle = -angle * 5
+                steering_angle = -angle * 2
 
         steering_angle = np.clip(steering_angle, -0.4, 0.4)
 
