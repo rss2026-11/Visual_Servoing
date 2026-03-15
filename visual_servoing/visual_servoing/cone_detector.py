@@ -64,9 +64,15 @@ class ConeDetector(Node):
         if bounding_box == ((0, 0), (0, 0)):
             return
 
+
         (x1, y1), (x2, y2) = bounding_box
+        
         u = float((x1 + x2) / 2)
-        v = float(y2)
+
+        if self.LineFollower:
+            v = float(y1 + (y2 - y1) * 0.3)  # lookahead for line following
+        else:
+            v = float(y2)  # bottom center for cone parking
 
         cone_px = ConeLocationPixel()
         cone_px.u = u
