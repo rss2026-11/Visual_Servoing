@@ -91,7 +91,7 @@ class ParkingController(Node):
         else:
             steering_angle = -angle
  
-        speed = np.clip(0.5 * distance_error, -1.0, 1.0)
+        self.speed = np.clip(0.5 * distance_error, -1.0, 1.0)
  
         # if close enough to target, stop
         if abs(distance_error) < 0.1:
