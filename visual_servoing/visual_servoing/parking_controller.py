@@ -36,6 +36,42 @@ class ParkingController(Node):
 
         self.get_logger().info("Parking Controller Initialized")
 
+
+    def relative_cone_callback(self, msg):
+        self.relative_x = msg.x_pos
+        self.relative_y = msg.y_pos
+        drive_cmd = AckermannDriveStamped()
+
+        self.distance = math.hypot(self.relative_x, self.relative_y)
+        angle = math.atan2(self.relative_y, self.relative_x)
+        distance_error = self.distance - self.parking_distance
+
+        # if cone is at a large angle, turn toward it first
+        if abs(angle) > 0.3:
+            speed = 0.3  # drive forward slowly while turning
+            steering_angle = angle
+        # close enough to target — stop
+        elif abs(distance_error) < 0.1:
+            speed = 0.0
+            steering_angle = 0.0
+        # cone is roughly ahead — drive toward/away based on distance
+        else:
+            speed = np.clip(0.5 * distance_error, -1.0, 1.0)
+            if distance_error > 0:
+                steering_angle = angle
+            else:
+                steering_angle = -angle
+
+        steering_angle = np.clip(steering_angle, -0.4, 0.4)
+
+        drive_cmd.drive.speed = float(speed)
+        drive_cmd.drive.steering_angle = float(steering_angle)
+        drive_cmd.drive.steering_angle_velocity = 0.0
+
+        self.drive_pub.publish(drive_cmd)
+        self.error_publisher()
+
+
     # def relative_cone_callback(self, msg):
     #     self.relative_x = msg.x_pos
     #     self.relative_y = msg.y_pos
@@ -71,53 +107,40 @@ class ParkingController(Node):
     #     self.drive_pub.publish(drive_cmd)
     #     self.error_publisher()
 
-    def relative_cone_callback(self, msg):
-        self.relative_x = msg.x_pos
-        self.relative_y = msg.y_pos
-        drive_cmd = AckermannDriveStamped()
+    # def relative_cone_callback(self, msg):
+    #     self.relative_x = msg.x_pos
+    #     self.relative_y = msg.y_pos
+    #     drive_cmd = AckermannDriveStamped()
 
-        #################################
+    #     #################################
 
-        # YOUR CODE HERE
-        # Use relative position and your control law to set drive_cmd
+    #     # YOUR CODE HERE
+    #     # Use relative position and your control law to set drive_cmd
 
-        self.distance = math.hypot(self.relative_x, self.relative_y)
-        angle = math.atan2(self.relative_y, self.relative_x)
+    #     self.distance = math.hypot(self.relative_x, self.relative_y)
+    #     angle = math.atan2(self.relative_y, self.relative_x)
 
-        distance_error = self.distance - self.parking_distance
+    #     # slow_threshold = 2.0
 
-        if distance_error > 0:
-            steering_angle = angle
-        else:
-            steering_angle = -angle
- 
-        speed = np.clip(0.5 * distance_error, -1.0, 1.0)
- 
-        # if close enough to target, stop
-        if abs(distance_error) < 0.1:
-            speed = 0.0
-            steering_angle = 0.0
-
-        # slow_threshold = 2.0
-        # if angle > 0.05 or angle < - 0.05:
-        #     self.speed = -1.0
-        #     steering_angle = -angle
-        # else: 
-        #     stop_distance = (self.distance + angle) - self.parking_distance
-        #     self.speed = np.clip(stop_distance, -1.0, 1.0)
-        #     steering_angle = angle
+    #     if angle > 0.05 or angle < - 0.05:
+    #         self.speed = -1.0
+    #         steering_angle = -angle
+    #     else: 
+    #         stop_distance = (self.distance + angle) - self.parking_distance
+    #         self.speed = np.clip(stop_distance, -1.0, 1.0)
+    #         steering_angle = angle
             
-        self.steering_angle = np.clip(steering_angle, -4.0, 4.0)
+    #     self.steering_angle = np.clip(steering_angle, -4.0, 4.0)
             
 
-        drive_cmd.drive.steering_angle = float(self.steering_angle)
-        drive_cmd.drive.speed = float(self.speed)
-        drive_cmd.drive.steering_angle_velocity = 0.0 
+    #     drive_cmd.drive.steering_angle = self.steering_angle
+    #     drive_cmd.drive.speed = self.speed
+    #     drive_cmd.drive.steering_angle_velocity = 0.0 
 
-        #################################
+    #     #################################
 
-        self.drive_pub.publish(drive_cmd)
-        self.error_publisher()
+    #     self.drive_pub.publish(drive_cmd)
+    #     self.error_publisher()
 
     def error_publisher(self):
         """
