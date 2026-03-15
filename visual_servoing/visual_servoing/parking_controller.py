@@ -80,8 +80,8 @@ class ParkingController(Node):
 
         if time_since_last_cone > 0.5:
             drive_cmd = AckermannDriveStamped()
-            drive_cmd.drive.speed = 0.0
-            drive_cmd.drive.steering_angle = 0.0
+            drive_cmd.drive.speed = -0.3
+            drive_cmd.drive.steering_angle = -0.3
             self.drive_pub.publish(drive_cmd)
 
 
