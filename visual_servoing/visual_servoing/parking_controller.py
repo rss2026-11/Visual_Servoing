@@ -49,8 +49,8 @@ class ParkingController(Node):
         distance_error = self.distance - self.parking_distance
 
         # if cone is at a large angle, turn toward it first
-        if abs(angle) > 0.3:
-            speed = 0.3  # drive forward slowly while turning
+        if abs(angle) > 0.2:
+            speed = -0.1  # drive forward slowly while turning
             steering_angle = angle
         # close enough to target — stop
         elif abs(distance_error) < 0.1:
@@ -80,7 +80,7 @@ class ParkingController(Node):
 
         if time_since_last_cone > 0.5:
             drive_cmd = AckermannDriveStamped()
-            drive_cmd.drive.speed = -0.1
+            drive_cmd.drive.speed = 0.0
             drive_cmd.drive.steering_angle = 0.0
             self.drive_pub.publish(drive_cmd)
 
