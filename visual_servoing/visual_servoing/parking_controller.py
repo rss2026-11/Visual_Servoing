@@ -26,7 +26,8 @@ class ParkingController(Node):
         self.error_pub = self.create_publisher(ParkingError, "/parking_error", 10)
 
         self.create_subscription(ConeLocation, "/relative_cone", self.relative_cone_callback, 1)
-
+        self.last_cone_msg_time = self.get_clock().now()
+        self.watchdog_timer = self.create_timer(0.1, self.watchdog_callback)
         self.parking_distance = 0.5  # meters; try playing with this number!
         self.relative_x = 0
         self.relative_y = 0
@@ -38,6 +39,7 @@ class ParkingController(Node):
 
 
     def relative_cone_callback(self, msg):
+        self.last_cone_msg_time = self.get_clock().now()
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
         drive_cmd = AckermannDriveStamped()
@@ -71,6 +73,17 @@ class ParkingController(Node):
         self.drive_pub.publish(drive_cmd)
         self.error_publisher()
 
+    def watchdog_callback(self):
+
+        current_time = self.get_clock().now()
+        time_since_last_cone = (current_time - self.last_cone_msg_time).nanoseconds / 1e9
+
+        if time_since_last_cone > 0.5:
+            drive_cmd = AckermannDriveStamped()
+            drive_cmd.drive.speed = -0.1
+            drive_cmd.drive.steering_angle = 0.0
+            self.drive_pub.publish(drive_cmd)
+
 
     # def relative_cone_callback(self, msg):
     #     self.relative_x = msg.x_pos
@@ -94,13 +107,13 @@ class ParkingController(Node):
     #         steering_angle = -angle
     #     else:
     #         steering_angle = angle
-            
+
     #     self.steering_angle = np.clip(steering_angle, -4.0, 4.0)
-            
+
 
     #     drive_cmd.drive.steering_angle = self.steering_angle
     #     drive_cmd.drive.speed = self.speed
-    #     drive_cmd.drive.steering_angle_velocity = 0.0 
+    #     drive_cmd.drive.steering_angle_velocity = 0.0
 
     #     #################################
 
@@ -125,17 +138,17 @@ class ParkingController(Node):
     #     if angle > 0.05 or angle < - 0.05:
     #         self.speed = -1.0
     #         steering_angle = -angle
-    #     else: 
+    #     else:
     #         stop_distance = (self.distance + angle) - self.parking_distance
     #         self.speed = np.clip(stop_distance, -1.0, 1.0)
     #         steering_angle = angle
-            
+
     #     self.steering_angle = np.clip(steering_angle, -4.0, 4.0)
-            
+
 
     #     drive_cmd.drive.steering_angle = self.steering_angle
     #     drive_cmd.drive.speed = self.speed
-    #     drive_cmd.drive.steering_angle_velocity = 0.0 
+    #     drive_cmd.drive.steering_angle_velocity = 0.0
 
     #     #################################
 
