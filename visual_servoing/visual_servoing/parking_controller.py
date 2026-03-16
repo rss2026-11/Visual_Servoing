@@ -35,6 +35,8 @@ class ParkingController(Node):
         self.speed = 0.0
         self.steering_angle = 0.0
 
+        self.line_follow = True  # use to set line follow vs cone parking
+
         self.get_logger().info("Parking Controller Initialized")
 
 
@@ -46,10 +48,19 @@ class ParkingController(Node):
         self.get_logger().info(f"X: {self.relative_x}, Y: {self.relative_y}")
         self.distance = math.hypot(self.relative_x, self.relative_y)
         angle = math.atan2(self.relative_y, self.relative_x)
-        distance_error = self.distance - self.parking_distance
+        if self.line_follow:
+            angle_error = 1
+            distance_offset = 2
+        else:
+            angle_error = 0.15
+            distance_offset = 0
+
+        distance_error = self.distance - self.parking_distance + distance_offset
+
+        
 
         # if cone is at a large angle, turn toward it first
-        if abs(angle) > 0.15 and self.distance < 0.5:
+        if abs(angle) > angle_error and self.distance < 0.5:
             speed = -0.5  # drive forward slowly while turning
             steering_angle = -angle
         # close enough to target — stop
