@@ -50,9 +50,13 @@ class ConeDetector(Node):
 
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
 
-
         h, w, _ = image.shape
-        image[int(h * 2/3):h, 0:w] = 0
+        lower_bound = int(h * 1/3)
+        upper_bound = int(h * 1/3)
+        image[lower_bound:h-upper_bound, 0:w] = 0
+        # image[int(h * 2/3):h, 0:w] = 0
+
+        # crop top of the image
 
         bounding_box = cd_color_segmentation(image, None)
 
