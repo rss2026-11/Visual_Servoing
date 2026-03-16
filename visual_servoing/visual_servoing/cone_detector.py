@@ -51,8 +51,13 @@ class ConeDetector(Node):
         image = self.bridge.imgmsg_to_cv2(image_msg, "bgr8")
 
         h, w, _ = image.shape
-        image[0:int(h * 0.5), :] = 0
-        image[int(h * 0.7):, :] = 0
+        
+        # image[0:int(h/3), :] = 0           # black out top third
+        # image[int(2*h/3):, :] = 0          # black out bottom third
+        # image[:, 0:int(w/3)] = 0           # black out left third
+        # image[:, int(2*w/3):] = 0          # black out right third
+        # image[0:int(h * 0.5), :] = 0
+        # image[int(h * 0.7):, :] = 0
         # lower_bound = int(h * 1/3)
         # upper_bound = int(h * 1/5)
         # image[lower_bound:h-upper_bound, 0:w] = 0

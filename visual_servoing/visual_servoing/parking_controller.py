@@ -35,7 +35,7 @@ class ParkingController(Node):
         self.speed = 0.0
         self.steering_angle = 0.0
 
-        self.line_follow = True  # use to set line follow vs cone parking
+        self.line_follow = False  # use to set line follow vs cone parking
 
         self.get_logger().info("Parking Controller Initialized")
 
@@ -45,11 +45,11 @@ class ParkingController(Node):
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
         drive_cmd = AckermannDriveStamped()
-        self.get_logger().info(f"X: {self.relative_x}, Y: {self.relative_y}")
+        # self.get_logger().info(f"X: {self.relative_x}, Y: {self.relative_y}")
         self.distance = math.hypot(self.relative_x, self.relative_y)
         angle = math.atan2(self.relative_y, self.relative_x)
         if self.line_follow:
-            angle_error = 1
+            angle_error = 1.5
             distance_offset = 2
         else:
             angle_error = 0.15
@@ -69,9 +69,10 @@ class ParkingController(Node):
             steering_angle = 0.0
         # cone is roughly ahead — drive toward/away based on distance
         else:
-            speed = np.clip(0.5 * distance_error, -1.0, 1.0)
+            speed = np.clip(distance_error, -1.0, 1.0)
             if distance_error > 0:
-                steering_angle = angle * 2
+                # gain x2 for cone, x.75 for line
+                steering_angle = 2 * angle
             else:
                 steering_angle = -angle * 2
 
@@ -89,7 +90,7 @@ class ParkingController(Node):
         current_time = self.get_clock().now()
         time_since_last_cone = (current_time - self.last_cone_msg_time).nanoseconds / 1e9
 
-        if time_since_last_cone > 0.5:
+        if time_since_last_cone > 1:
             drive_cmd = AckermannDriveStamped()
             drive_cmd.drive.speed = -0.3
             drive_cmd.drive.steering_angle = -0.3
@@ -181,7 +182,7 @@ class ParkingController(Node):
         error_msg.x_error = self.relative_x
         error_msg.y_error = self.relative_y
 
-        error_msg.distance_error = self.distance - self.parking_distance
+        error_msg.distance_error = math.sqrt(self.relative_x**2 + self.relative_y**2)
         #################################
 
         self.error_pub.publish(error_msg)
