@@ -27,8 +27,11 @@ def cd_color_segmentation(img, template):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # mask ranges for orange color
-    lower_orange = np.array([0, 80, 50])
-    upper_orange = np.array([20, 255, 200])
+    # lower_orange = np.array([0, 100, 80])
+    # upper_orange = np.array([25, 255, 255])
+
+    upper_orange = np.array([20,255,200])
+    lower_orange = np.array([5,60,40])
 
     # cv2.inRange returns a binary image: 255 where pixel is in range, 0 otherwise
     mask = cv2.inRange(hsv, lower_orange, upper_orange)
@@ -64,12 +67,12 @@ def cd_color_segmentation(img, template):
         # h/w > 0.5 allows for wide cones at close range
         # h/w < 5.0 rejects very thin vertical lines
         aspect_ratio = float(h) / float(w)
-        if aspect_ratio < 0.5 or aspect_ratio > 5.0:
-            continue
+         # if aspect_ratio < 0.5 or aspect_ratio > 5.0:
+           #  continue
 
         # # USE FOR LINE INTEAD OF CONE
-        # if aspect_ratio < 0.1 or aspect_ratio > 10.0:
-        #     continue
+        if aspect_ratio < 0.1 or aspect_ratio > 10.0:
+             continue
 
         # ratio of contour area to its convex hull area.
         hull = cv2.convexHull(contour)
