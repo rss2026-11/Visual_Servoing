@@ -24,7 +24,7 @@ from vs_msgs.msg import ConeLocation, ConeLocationPixel
 # DUMMY POINTS -- ENTER YOUR MEASUREMENTS HERE
 PTS_IMAGE_PLANE = [[195, 278],
                    [475, 290],
-                   [245, 222],
+                   [245, 223],
                    [420, 223]]  # dummy points
 ######################################################
 
