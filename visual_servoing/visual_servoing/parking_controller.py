@@ -57,7 +57,7 @@ class ParkingController(Node):
 
         distance_error = self.distance - self.parking_distance + distance_offset
 
-        
+
 
         # if cone is at a large angle, turn toward it first
         if abs(angle) > angle_error and self.distance < 0.5:
