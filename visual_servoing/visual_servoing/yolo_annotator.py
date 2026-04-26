@@ -83,9 +83,12 @@ class YoloAnnotatorNode(Node):
         #       COCO class names to detect and their corresponding colors
         #       in the annotated image.
         return {
-            "chair": (255, 0, 0),
-            "dining table": (0, 255, 0),
-            "laptop": (255, 255, 0), # Cyan
+            # "chair": (255, 0, 0),
+            # "dining table": (0, 255, 0),
+            # "laptop": (255, 255, 0), # Cyan
+            "person": (0, 255, 0),          # Green
+            "traffic light": (0, 0, 255),   # Red
+            "parking meter": (255, 0, 0),   # Blue
         }
 
     def on_image(self, msg: Image) -> None:
