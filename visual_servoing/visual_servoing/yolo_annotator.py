@@ -13,6 +13,7 @@ from typing import List
 from ultralytics import YOLO
 
 
+
 @dataclass(frozen=True)
 class Detection:
     class_id: int
@@ -163,7 +164,7 @@ class YoloAnnotatorNode(Node):
             # detection.x1, detection.y1, detection.x2, detection.y2 = xys
 
             detections.append(detection)
-           
+
 
         return detections
 
@@ -185,7 +186,7 @@ class YoloAnnotatorNode(Node):
             #       by accessing the self.class_color_map dictionary.
             #
             # Hint: Use cv2's `rectangle` function to draw a rectangle on the annotated image.
-            
+
             color = self.class_color_map[det.class_name]
 
             print(out_image)
