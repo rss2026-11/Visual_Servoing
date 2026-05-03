@@ -92,8 +92,13 @@ class ParkingController(Node):
 
         if time_since_last_cone > 1:
             drive_cmd = AckermannDriveStamped()
-            drive_cmd.drive.speed = -0.3
-            drive_cmd.drive.steering_angle = -0.3
+            # If we were already very close, losing the cone probably means it went under the camera's view!
+            if self.distance > 0.0 and self.distance < 0.6:
+                drive_cmd.drive.speed = 0.0
+                drive_cmd.drive.steering_angle = 0.0
+            else:
+                drive_cmd.drive.speed = -0.3
+                drive_cmd.drive.steering_angle = -0.3
             self.drive_pub.publish(drive_cmd)
 
 
