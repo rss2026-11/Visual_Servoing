@@ -28,7 +28,7 @@ class ParkingController(Node):
         self.create_subscription(ConeLocation, "/relative_cone", self.relative_cone_callback, 1)
         self.last_cone_msg_time = self.get_clock().now()
         self.watchdog_timer = self.create_timer(0.1, self.watchdog_callback)
-        self.parking_distance = 0.4  # meters; try playing with this number!
+        self.parking_distance = 0.7  # meters; try playing with this number!
         self.relative_x = 0
         self.relative_y = 0
         self.distance = 0.0
