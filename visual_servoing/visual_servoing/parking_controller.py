@@ -59,24 +59,56 @@ class ParkingController(Node):
 
 
 
+        # ==== OLD PROPORTIONAL CONTROLLER (COMMENTED OUT) ====
+        # if abs(angle) > angle_error and self.distance < 0.5:
+        #     speed = -0.5  # drive forward slowly while turning
+        #     steering_angle = -angle
+        # elif abs(distance_error) < 0.1:
+        #     speed = 0.0
+        #     steering_angle = 0.0
+        # else:
+        #     speed = np.clip(distance_error, -0.5, 0.5)
+        #     if distance_error > 0:
+        #         # gain x2 for cone, x.75 for line
+        #         steering_angle = 2 * angle
+        #     else:
+        #         steering_angle = -angle * 2
+        # steering_angle = np.clip(steering_angle, -0.1, 0.1)
+
+
+        # ==== ADDED: PURE PURSUIT KINEMATICS ====
+        # The camera gives us x (forward) and y (left) relative to the car.
+        # This acts as our live "lookahead point" for Pure Pursuit!
+        L = self.distance
+        wheelbase = 0.33  # Standard MIT Racecar wheelbase
+        
+        if L > 0.01:
+            # Curvature gamma = 2 * y / L^2
+            curvature = 2.0 * self.relative_y / (L ** 2)
+            pp_steering = math.atan(wheelbase * curvature)
+        else:
+            pp_steering = 0.0
+
         # if cone is at a large angle, turn toward it first
         if abs(angle) > angle_error and self.distance < 0.5:
-            speed = -0.5  # drive forward slowly while turning
-            steering_angle = -angle
+            speed = -0.5  # drive reverse slowly while turning
+            steering_angle = -pp_steering
         # close enough to target — stop
         elif abs(distance_error) < 0.1:
             speed = 0.0
             steering_angle = 0.0
         # cone is roughly ahead — drive toward/away based on distance
         else:
-            speed = np.clip(distance_error, -1.0, 1.0)
+            speed = np.clip(distance_error, -0.5, 0.5)
             if distance_error > 0:
-                # gain x2 for cone, x.75 for line
-                steering_angle = 2 * angle
+                steering_angle = pp_steering
             else:
-                steering_angle = -angle * 2
+                # invert steering when reversing to maintain the same arc
+                steering_angle = -pp_steering
 
-        steering_angle = np.clip(steering_angle, -0.4, 0.4)
+        # Physical limit of VESC is around 0.34 radians (20 degrees).
+        # We widen this from the restrictive 0.1 so the car can actually turn!
+        steering_angle = np.clip(steering_angle, -0.34, 0.34)
 
         drive_cmd.drive.speed = float(speed)
         drive_cmd.drive.steering_angle = float(steering_angle)
