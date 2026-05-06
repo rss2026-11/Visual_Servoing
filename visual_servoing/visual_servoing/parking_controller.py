@@ -37,11 +37,20 @@ class ParkingController(Node):
 
         self.line_follow = False  # use to set line follow vs cone parking
 
+        self.recovery_state = "IDLE"
+        self.recovery_start_time = None
+
         self.get_logger().info("Parking Controller Initialized")
 
 
     def relative_cone_callback(self, msg):
         self.last_cone_msg_time = self.get_clock().now()
+        
+        # Reset recovery state anytime we successfully see the cone
+        if self.recovery_state != "IDLE":
+            self.get_logger().info("Cone found! Exiting recovery maneuver.")
+            self.recovery_state = "IDLE"
+
         self.relative_x = msg.x_pos
         self.relative_y = msg.y_pos
         drive_cmd = AckermannDriveStamped()
@@ -122,15 +131,63 @@ class ParkingController(Node):
         current_time = self.get_clock().now()
         time_since_last_cone = (current_time - self.last_cone_msg_time).nanoseconds / 1e9
 
-        if time_since_last_cone > 1:
+        # ==== OLD WATCHDOG LOGIC (COMMENTED OUT) ====
+        # if time_since_last_cone > 1:
+        #     drive_cmd = AckermannDriveStamped()
+        #     if self.distance > 0.0 and self.distance < 0.6:
+        #         drive_cmd.drive.speed = 0.0
+        #         drive_cmd.drive.steering_angle = 0.0
+        #     else:
+        #         drive_cmd.drive.speed = -0.3
+        #         drive_cmd.drive.steering_angle = -0.3
+        #     self.drive_pub.publish(drive_cmd)
+
+        # ==== NEW RECOVERY STATE MACHINE ====
+        if time_since_last_cone > 0.5:
             drive_cmd = AckermannDriveStamped()
-            # If we were already very close, losing the cone probably means it went under the camera's view!
-            if self.distance > 0.0 and self.distance < 0.6:
+            
+            # Phase 1: Coast/Stop (0.5s to 2.0s)
+            # We don't want to wildly reverse if the cone is just glitching for 1 second.
+            if time_since_last_cone <= 2.0:
+                self.recovery_state = "IDLE"
                 drive_cmd.drive.speed = 0.0
                 drive_cmd.drive.steering_angle = 0.0
+                
+            # Phase 2: Recovery Maneuver (> 2.0s)
             else:
-                drive_cmd.drive.speed = -0.3
-                drive_cmd.drive.steering_angle = -0.3
+                if self.recovery_state == "IDLE":
+                    self.get_logger().warn("Lost cone for 2 seconds. Starting RECOVERY: BACKUP")
+                    self.recovery_state = "BACKUP"
+                    self.recovery_start_time = current_time
+
+                elapsed = (current_time - self.recovery_start_time).nanoseconds / 1e9
+
+                if self.recovery_state == "BACKUP":
+                    drive_cmd.drive.speed = -0.4
+                    drive_cmd.drive.steering_angle = 0.0
+                    if elapsed > 2.0:
+                        self.get_logger().warn("RECOVERY: FORWARD_RIGHT")
+                        self.recovery_state = "FORWARD_RIGHT"
+                        self.recovery_start_time = current_time
+                
+                elif self.recovery_state == "FORWARD_RIGHT":
+                    drive_cmd.drive.speed = 0.5
+                    # right turn is negative angle
+                    drive_cmd.drive.steering_angle = -0.34
+                    if elapsed > 1.0:
+                        self.get_logger().warn("RECOVERY: FORWARD_LEFT")
+                        self.recovery_state = "FORWARD_LEFT"
+                        self.recovery_start_time = current_time
+                        
+                elif self.recovery_state == "FORWARD_LEFT":
+                    drive_cmd.drive.speed = 0.5
+                    # left turn is positive angle
+                    drive_cmd.drive.steering_angle = 0.34
+                    if elapsed > 1.0:
+                        self.get_logger().warn("RECOVERY: Restarting BACKUP")
+                        self.recovery_state = "BACKUP"
+                        self.recovery_start_time = current_time
+
             self.drive_pub.publish(drive_cmd)
 
 
