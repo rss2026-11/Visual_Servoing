@@ -4,7 +4,7 @@ import rclpy
 from rclpy.node import Node
 import numpy as np
 import math
-
+from std_msgs.msg import String
 from vs_msgs.msg import ConeLocation, ParkingError
 from ackermann_msgs.msg import AckermannDriveStamped
 
@@ -25,8 +25,12 @@ class ParkingController(Node):
         self.drive_pub = self.create_publisher(AckermannDriveStamped, DRIVE_TOPIC, 10)
         self.error_pub = self.create_publisher(ParkingError, "/parking_error", 10)
 
+
+        self.create_subscription(String, "/part_b/state", self.state_callback, 10)
+        self.is_active = False
+
         self.create_subscription(ConeLocation, "/relative_cone", self.relative_cone_callback, 1)
-        self.last_cone_msg_time = self.get_clock().now()
+        self.last_cone_msg_time = None
         self.watchdog_timer = self.create_timer(0.1, self.watchdog_callback)
         self.parking_distance = 0.7  # meters; try playing with this number!
         self.relative_x = 0
@@ -43,9 +47,17 @@ class ParkingController(Node):
         self.get_logger().info("Parking Controller Initialized")
 
 
+    def state_callback(self, msg):
+        # We only care about the parking meter if we are actively in the APPROACH state
+        self.is_active = ("APPROACH" in msg.data)
+
     def relative_cone_callback(self, msg):
+        # Even if we see a cone, ignore it completely if the state machine hasn't given us control
+        if not self.is_active:
+            return
+
         self.last_cone_msg_time = self.get_clock().now()
-        
+
         # Reset recovery state anytime we successfully see the cone
         if self.recovery_state != "IDLE":
             self.get_logger().info("Cone found! Exiting recovery maneuver.")
@@ -90,7 +102,7 @@ class ParkingController(Node):
         # This acts as our live "lookahead point" for Pure Pursuit!
         L = self.distance
         wheelbase = 0.33  # Standard MIT Racecar wheelbase
-        
+
         if L > 0.01:
             # Curvature gamma = 2 * y / L^2
             curvature = 2.0 * self.relative_y / (L ** 2)
@@ -127,9 +139,19 @@ class ParkingController(Node):
         self.error_publisher()
 
     def watchdog_callback(self):
+        # If the state machine hasn't put us in APPROACH mode, the watchdog shouldn't do anything!
+        if not self.is_active or self.last_cone_msg_time is None:
+            return
 
         current_time = self.get_clock().now()
         time_since_last_cone = (current_time - self.last_cone_msg_time).nanoseconds / 1e9
+
+        # If it's been lost for over 10 seconds, the car has likely successfully parked
+        # and moved on to the next mission. Go back to sleep!
+        if time_since_last_cone > 10.0:
+            self.recovery_state = "IDLE"
+            self.last_cone_msg_time = None
+            return
 
         # ==== OLD WATCHDOG LOGIC (COMMENTED OUT) ====
         # if time_since_last_cone > 1:
@@ -145,14 +167,14 @@ class ParkingController(Node):
         # ==== NEW RECOVERY STATE MACHINE ====
         if time_since_last_cone > 0.5:
             drive_cmd = AckermannDriveStamped()
-            
+
             # Phase 1: Coast/Stop (0.5s to 2.0s)
             # We don't want to wildly reverse if the cone is just glitching for 1 second.
             if time_since_last_cone <= 2.0:
                 self.recovery_state = "IDLE"
                 drive_cmd.drive.speed = 0.0
                 drive_cmd.drive.steering_angle = 0.0
-                
+
             # Phase 2: Recovery Maneuver (> 2.0s)
             else:
                 if self.recovery_state == "IDLE":
@@ -169,7 +191,7 @@ class ParkingController(Node):
                         self.get_logger().warn("RECOVERY: FORWARD_RIGHT")
                         self.recovery_state = "FORWARD_RIGHT"
                         self.recovery_start_time = current_time
-                
+
                 elif self.recovery_state == "FORWARD_RIGHT":
                     drive_cmd.drive.speed = 0.5
                     # right turn is negative angle
@@ -178,7 +200,7 @@ class ParkingController(Node):
                         self.get_logger().warn("RECOVERY: FORWARD_LEFT")
                         self.recovery_state = "FORWARD_LEFT"
                         self.recovery_start_time = current_time
-                        
+
                 elif self.recovery_state == "FORWARD_LEFT":
                     drive_cmd.drive.speed = 0.5
                     # left turn is positive angle
